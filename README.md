@@ -1,6 +1,6 @@
 # PonPox
 
-Séptima versión del interfaz de gestión de recursos humanos y producción para personal de eventos, congresos y acciones de imagen de marca.
+Octava versión del interfaz de gestión de recursos humanos y producción para personal de eventos, congresos y acciones de imagen de marca.
 
 ## Ejecutar en VSCode
 
@@ -17,7 +17,9 @@ Cada ficha se guarda en la base local `ponpox.db`, creada automáticamente junto
 
 Desde la pestaña `Personal`, marca la casilla de la columna `Informe` en una persona o en el grupo que quieras exportar. Después se pueden generar informes en formato Excel (`.xls`) y PDF (`.pdf`). Antes de exportar, PonPox pregunta qué campos deben aparecer. Los datos especialmente sensibles —DNI/NIE, número de Seguridad Social e IBAN— quedan desmarcados por defecto. Cada profesional se presenta como una ficha vertical, en líneas de campo y valor: el PDF incluye el logotipo de PonPox en cada ficha y el Excel incorpora la cabecera corporativa.
 
-La ficha de persona contiene nombre, dos apellidos, DNI/NIE, número de Seguridad Social, fecha de nacimiento, dirección completa, IBAN, teléfono, altura, tallas de vestuario, calzado, idiomas certificados y categorías de experiencia: Eventos, Imagen, Congresos, Promoción, Feria y Carga/descarga.
+La ficha de persona contiene nombre completo, DNI/NIE, número de Seguridad Social, fecha de nacimiento, dirección completa, IBAN, teléfono, altura, tallas de vestuario, calzado, idiomas certificados, observaciones y categorías de experiencia: Eventos, Imagen, Congresos, Promoción, Feria y Carga/descarga.
+
+En la pestaña `Personal`, el botón `Importar Excel` permite cargar el listado de la hoja `AZAF+IBAN@6 NOV` del cuadro comercial de PonPox. Crea fichas para las personas nuevas e incorpora IBAN, ciudad y observaciones cuando estos datos aún estén vacíos. Si encuentra valores distintos en una ficha existente, muestra la divergencia y permite conservar los datos de la ficha, usar los del Excel o detener la importación para revisar la ficha manualmente. El resto de columnas del Excel se omite.
 
 Producción dispone de las pestañas `N.º presupuesto`, `Evento`, `Fechas del servicio` y `Personal`. Esta última carga el personal existente desde RR.HH. para poder marcar quién participará en cada servicio. Al guardar una producción, el evento y sus fechas quedan vinculados automáticamente al historial laboral de las personas asignadas.
 

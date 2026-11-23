@@ -4,18 +4,26 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
+import javax.xml.parsers.DocumentBuilderFactory;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 /** Pantalla inicial de PonPox: gestión de personal para eventos y congresos. */
 public class PonPox {
@@ -198,7 +206,7 @@ public class PonPox {
     private static class GestionPersonal {
         private final RepositorioPersonal repositorio = new RepositorioPersonal();
         private final DefaultTableModel modelo = new DefaultTableModel(
-            new String[] { "Informe", "ID", "Nombre", "Primer apellido", "Segundo apellido", "Teléfono", "E-mail", "Coche" }, 0) {
+            new String[] { "Informe", "ID", "Nombre completo", "Teléfono", "E-mail", "Coche" }, 0) {
             @Override public Class<?> getColumnClass(int columna) { return columna == 0 ? Boolean.class : String.class; }
             @Override public boolean isCellEditable(int fila, int columna) { return columna == 0; }
         };
@@ -206,9 +214,7 @@ public class PonPox {
         private DefaultTableModel modeloHistorial;
         private JTabbedPane pestanas;
         private int idActual = -1;
-        private final JTextField nombre = nuevoCampo();
-        private final JTextField primerApellido = nuevoCampo();
-        private final JTextField segundoApellido = nuevoCampo();
+        private final JTextField nombreCompleto = nuevoCampo();
         private final JTextField dni = nuevoCampo();
         private final JTextField fechaNacimiento = nuevoCampo();
         private final JComboBox<String> tipoVia = new JComboBox<>(new String[] { "Calle", "Avenida", "Plaza", "Paseo", "Otra" });
@@ -229,6 +235,7 @@ public class PonPox {
         private final JTextField tallaCamiseta = nuevoCampo();
         private final JTextField tallaCalzado = nuevoCampo();
         private final JTextField idiomas = nuevoCampo();
+        private final JTextArea observaciones = nuevaArea();
         private final JCheckBox experienciaEventos = new JCheckBox("E · Eventos");
         private final JCheckBox experienciaImagen = new JCheckBox("I · Imagen");
         private final JCheckBox experienciaCongresos = new JCheckBox("C · Congresos");
@@ -254,9 +261,11 @@ public class PonPox {
             ayuda.setForeground(new Color(85, 85, 90)); ayuda.setFont(new Font("SansSerif", Font.PLAIN, 14));
             textos.add(titulo); textos.add(Box.createVerticalStrut(6)); textos.add(ayuda);
             cabecera.add(textos, BorderLayout.WEST);
+            JButton importar = botonSecundario("Importar Excel"); importar.addActionListener(e -> importarExcel());
             JButton alta = botonRosa("Nueva persona");
             alta.addActionListener(e -> { limpiarFicha(); pestanas.setSelectedIndex(1); });
-            cabecera.add(alta, BorderLayout.EAST);
+            JPanel cabeceraAcciones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0)); cabeceraAcciones.setOpaque(false); cabeceraAcciones.add(importar); cabeceraAcciones.add(alta);
+            cabecera.add(cabeceraAcciones, BorderLayout.EAST);
             contenido.add(cabecera, BorderLayout.NORTH);
 
             tabla = new JTable(modelo);
@@ -304,9 +313,8 @@ public class PonPox {
             JPanel formulario = new JPanel(new GridBagLayout()); formulario.setBackground(Color.WHITE);
             GridBagConstraints c = nuevasRestricciones();
             agregarSeccion(formulario, "Datos personales", 0, c);
-            agregarCampo(formulario, "Nombre *", nombre, 1, 0, c); agregarCampo(formulario, "Primer apellido *", primerApellido, 1, 1, c);
-            agregarCampo(formulario, "Segundo apellido", segundoApellido, 2, 0, c); agregarCampo(formulario, "DNI / NIE", dni, 2, 1, c);
-            agregarCampo(formulario, "Fecha de nacimiento", fechaNacimiento, 3, 0, c);
+            agregarCampo(formulario, "Nombre completo *", nombreCompleto, 1, 0, c); agregarCampo(formulario, "DNI / NIE", dni, 1, 1, c);
+            agregarCampo(formulario, "Fecha de nacimiento", fechaNacimiento, 2, 0, c);
             agregarSeccion(formulario, "Dirección", 4, c);
             agregarCampo(formulario, "Tipo de vía", tipoVia, 5, 0, c); agregarCampo(formulario, "Calle, avenida o plaza", via, 5, 1, c);
             agregarCampo(formulario, "Número", numero, 6, 0, c); agregarCampo(formulario, "Piso / puerta", piso, 6, 1, c);
@@ -320,6 +328,7 @@ public class PonPox {
             agregarCampo(formulario, "Talla pantalón / falda", tallaPantalon, 14, 0, c); agregarCampo(formulario, "Talla camisa", tallaCamisa, 14, 1, c);
             agregarCampo(formulario, "Talla camiseta", tallaCamiseta, 15, 0, c); agregarCampo(formulario, "Talla calzado", tallaCalzado, 15, 1, c);
             agregarExperiencia(formulario, 16, c);
+            agregarCampo(formulario, "Observaciones", new JScrollPane(observaciones), 17, 0, c);
             JScrollPane scroll = new JScrollPane(formulario); scroll.setBorder(BorderFactory.createEmptyBorder()); contenido.add(scroll, BorderLayout.CENTER);
             JPanel acciones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0)); acciones.setOpaque(false);
             JButton nueva = botonSecundario("Nueva ficha"); nueva.addActionListener(e -> limpiarFicha());
@@ -377,7 +386,7 @@ public class PonPox {
             if (tabla == null) return;
             modelo.setRowCount(0);
             for (Persona persona : repositorio.listar(filtro)) {
-                modelo.addRow(new Object[] { false, persona.id, persona.nombre, persona.apellido1, persona.apellido2, persona.telefono, persona.email, persona.coche });
+                modelo.addRow(new Object[] { false, persona.id, nombreCompleto(persona), persona.telefono, persona.email, persona.coche });
             }
         }
 
@@ -386,10 +395,10 @@ public class PonPox {
             int fila = tabla.convertRowIndexToModel(tabla.getSelectedRow());
             Persona persona = repositorio.buscar((Integer) modelo.getValueAt(fila, 1));
             if (persona == null) return;
-            idActual = persona.id; nombre.setText(persona.nombre); primerApellido.setText(persona.apellido1); segundoApellido.setText(persona.apellido2);
+            idActual = persona.id; nombreCompleto.setText(nombreCompleto(persona));
             dni.setText(persona.dni); cargarDireccion(persona.direccion); telefono.setText(persona.telefono); email.setText(persona.email);
-            seguridadSocial.setText(persona.seguridadSocial); iban.setText(persona.iban); coche.setSelectedItem(persona.coche); fechaNacimiento.setText(persona.fechaNacimiento); altura.setText(persona.altura); tallaPantalon.setText(persona.tallaPantalon); tallaCamisa.setText(persona.tallaCamisa); tallaCamiseta.setText(persona.tallaCamiseta); tallaCalzado.setText(persona.tallaCalzado); idiomas.setText(persona.idiomas); cargarExperiencia(persona.experiencia);
-            estadoFicha.setText("Editando ficha n.º " + persona.id + " · " + persona.nombre + " " + persona.apellido1);
+            seguridadSocial.setText(persona.seguridadSocial); iban.setText(persona.iban); coche.setSelectedItem(persona.coche); fechaNacimiento.setText(persona.fechaNacimiento); altura.setText(persona.altura); tallaPantalon.setText(persona.tallaPantalon); tallaCamisa.setText(persona.tallaCamisa); tallaCamiseta.setText(persona.tallaCamiseta); tallaCalzado.setText(persona.tallaCalzado); idiomas.setText(persona.idiomas); observaciones.setText(persona.observaciones); cargarExperiencia(persona.experiencia);
+            estadoFicha.setText("Editando ficha n.º " + persona.id + " · " + nombreCompleto(persona));
             cargarHistorial();
             pestanas.setSelectedIndex(1);
         }
@@ -398,26 +407,26 @@ public class PonPox {
             if (tabla.getSelectedRow() < 0) { JOptionPane.showMessageDialog(tabla, "Selecciona primero una persona de la tabla."); return; }
             int fila = tabla.convertRowIndexToModel(tabla.getSelectedRow());
             int id = (Integer) modelo.getValueAt(fila, 1);
-            String persona = modelo.getValueAt(fila, 2) + " " + modelo.getValueAt(fila, 3);
+            String persona = (String) modelo.getValueAt(fila, 2);
             if (JOptionPane.showConfirmDialog(tabla, "¿Eliminar la ficha de " + persona + "?", "Confirmar eliminación", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                 repositorio.eliminar(id); cargarListado(""); limpiarFicha();
             }
         }
 
         private void guardarFicha() {
-            if (nombre.getText().trim().isEmpty() || primerApellido.getText().trim().isEmpty()) {
-                JOptionPane.showMessageDialog(nombre, "Indica al menos el nombre y el primer apellido.", "Datos pendientes", JOptionPane.WARNING_MESSAGE); return;
+            if (nombreCompleto.getText().trim().isEmpty()) {
+                JOptionPane.showMessageDialog(nombreCompleto, "Indica el nombre completo.", "Datos pendientes", JOptionPane.WARNING_MESSAGE); return;
             }
-            Persona persona = new Persona(idActual, nombre.getText(), primerApellido.getText(), segundoApellido.getText(), dni.getText(), direccionCompleta(), telefono.getText(), email.getText(), seguridadSocial.getText(), iban.getText(), (String) coche.getSelectedItem(), fechaNacimiento.getText(), altura.getText(), tallaPantalon.getText(), tallaCamisa.getText(), tallaCamiseta.getText(), tallaCalzado.getText(), idiomas.getText(), experienciaSeleccionada());
+            Persona persona = new Persona(idActual, nombreCompleto.getText(), "", "", dni.getText(), direccionCompleta(), telefono.getText(), email.getText(), seguridadSocial.getText(), iban.getText(), (String) coche.getSelectedItem(), fechaNacimiento.getText(), altura.getText(), tallaPantalon.getText(), tallaCamisa.getText(), tallaCamiseta.getText(), tallaCalzado.getText(), idiomas.getText(), experienciaSeleccionada(), observaciones.getText());
             int idGuardado = repositorio.guardar(persona);
-            if (idGuardado < 0) { JOptionPane.showMessageDialog(nombre, "No se ha podido guardar la ficha. Comprueba que las bibliotecas de la carpeta lib están presentes.", "Error", JOptionPane.ERROR_MESSAGE); return; }
-            idActual = idGuardado; estadoFicha.setText("Ficha guardada n.º " + idActual + " · " + nombre.getText().trim() + " " + primerApellido.getText().trim());
-            cargarListado(""); JOptionPane.showMessageDialog(nombre, "Ficha guardada en la base de datos local.", "PonPox", JOptionPane.INFORMATION_MESSAGE);
+            if (idGuardado < 0) { JOptionPane.showMessageDialog(nombreCompleto, "No se ha podido guardar la ficha. Comprueba que las bibliotecas de la carpeta lib están presentes.", "Error", JOptionPane.ERROR_MESSAGE); return; }
+            idActual = idGuardado; estadoFicha.setText("Ficha guardada n.º " + idActual + " · " + nombreCompleto.getText().trim());
+            cargarListado(""); JOptionPane.showMessageDialog(nombreCompleto, "Ficha guardada en la base de datos local.", "PonPox", JOptionPane.INFORMATION_MESSAGE);
         }
 
         private void limpiarFicha() {
-            idActual = -1; nombre.setText(""); primerApellido.setText(""); segundoApellido.setText(""); dni.setText(""); fechaNacimiento.setText(""); tipoVia.setSelectedIndex(0); via.setText(""); numero.setText(""); piso.setText(""); codigoPostal.setText(""); ciudad.setText(""); provincia.setText(""); pais.setText(""); telefono.setText(""); email.setText(""); seguridadSocial.setText(""); iban.setText(""); altura.setText(""); tallaPantalon.setText(""); tallaCamisa.setText(""); tallaCamiseta.setText(""); tallaCalzado.setText(""); idiomas.setText(""); experienciaEventos.setSelected(false); experienciaImagen.setSelected(false); experienciaCongresos.setSelected(false); experienciaPromocion.setSelected(false); experienciaFerias.setSelected(false); experienciaCarga.setSelected(false); coche.setSelectedIndex(0);
-            estadoFicha.setText("Nueva ficha"); nombre.requestFocusInWindow();
+            idActual = -1; nombreCompleto.setText(""); dni.setText(""); fechaNacimiento.setText(""); tipoVia.setSelectedIndex(0); via.setText(""); numero.setText(""); piso.setText(""); codigoPostal.setText(""); ciudad.setText(""); provincia.setText(""); pais.setText(""); telefono.setText(""); email.setText(""); seguridadSocial.setText(""); iban.setText(""); altura.setText(""); tallaPantalon.setText(""); tallaCamisa.setText(""); tallaCamiseta.setText(""); tallaCalzado.setText(""); idiomas.setText(""); observaciones.setText(""); experienciaEventos.setSelected(false); experienciaImagen.setSelected(false); experienciaCongresos.setSelected(false); experienciaPromocion.setSelected(false); experienciaFerias.setSelected(false); experienciaCarga.setSelected(false); coche.setSelectedIndex(0);
+            estadoFicha.setText("Nueva ficha"); nombreCompleto.requestFocusInWindow();
         }
 
         private String direccionCompleta() {
@@ -431,11 +440,75 @@ public class PonPox {
             } else { via.setText(texto == null ? "" : texto); }
         }
 
+        private void importarExcel() {
+            JFileChooser selector = new JFileChooser();
+            selector.setDialogTitle("Selecciona el cuadro comercial de PonPox");
+            if (selector.showOpenDialog(tabla) != JFileChooser.APPROVE_OPTION) return;
+            try {
+                List<RegistroExcel> registros = LectorExcelPonPox.leer(selector.getSelectedFile());
+                if (registros.isEmpty()) { JOptionPane.showMessageDialog(tabla, "No se han encontrado personas en la hoja 'AZAF+IBAN@6 NOV'."); return; }
+                List<Persona> existentes = repositorio.listar(""); int nuevos = 0, actualizados = 0, conflictos = 0;
+                for (RegistroExcel registro : registros) {
+                    Persona ficha = buscarPorNombre(existentes, registro.nombreCompleto);
+                    if (ficha == null) {
+                        Persona nueva = new Persona(-1, registro.nombreCompleto, "", "", "", direccionInicial(registro.ciudad), "", "", "", registro.iban, "No", "", "", "", "", "", "", "", "", registro.observaciones);
+                        int id = repositorio.guardar(nueva); if (id >= 0) { nuevos++; existentes.add(repositorio.buscar(id)); }
+                        continue;
+                    }
+                    List<String> diferencias = diferencias(ficha, registro);
+                    boolean usarExcel = false;
+                    if (!diferencias.isEmpty()) {
+                        conflictos++;
+                        int opcion = JOptionPane.showOptionDialog(tabla, "La ficha de " + nombreCompleto(ficha) + " contiene valores distintos:\n\n" + String.join("\n", diferencias) + "\n\nElige qué dato conservar. Puedes detener la importación para abrir y corregir la ficha manualmente.", "Divergencia de datos", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[] { "Conservar ficha", "Usar datos Excel", "Detener importación" }, "Conservar ficha");
+                        if (opcion == 2 || opcion == JOptionPane.CLOSED_OPTION) break;
+                        usarExcel = opcion == 1;
+                    }
+                    Persona fusionada = fusionar(ficha, registro, usarExcel);
+                    if (!mismaFicha(ficha, fusionada)) { repositorio.guardar(fusionada); actualizados++; }
+                }
+                cargarListado("");
+                JOptionPane.showMessageDialog(tabla, "Importación terminada.\nNuevas fichas: " + nuevos + "\nFichas completadas o actualizadas: " + actualizados + "\nDivergencias revisadas: " + conflictos, "PonPox", JOptionPane.INFORMATION_MESSAGE);
+            } catch (Exception error) {
+                JOptionPane.showMessageDialog(tabla, "No se ha podido importar el Excel:\n" + error.getMessage(), "Error de importación", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+
+        private Persona buscarPorNombre(List<Persona> personas, String nombre) {
+            for (Persona persona : personas) if (normalizar(nombreCompleto(persona)).equals(normalizar(nombre))) return persona;
+            return null;
+        }
+
+        private List<String> diferencias(Persona ficha, RegistroExcel excel) {
+            List<String> resultado = new ArrayList<>();
+            if (distinto(ficha.iban, excel.iban)) resultado.add("IBAN · Ficha: " + ficha.iban + " | Excel: " + excel.iban);
+            if (distinto(ciudadDeDireccion(ficha.direccion), excel.ciudad)) resultado.add("Ciudad · Ficha: " + ciudadDeDireccion(ficha.direccion) + " | Excel: " + excel.ciudad);
+            if (distinto(ficha.observaciones, excel.observaciones)) resultado.add("Observaciones · Ficha: " + ficha.observaciones + " | Excel: " + excel.observaciones);
+            return resultado;
+        }
+
+        private Persona fusionar(Persona ficha, RegistroExcel excel, boolean usarExcel) {
+            String ibanFinal = elegir(ficha.iban, excel.iban, usarExcel);
+            String ciudadFinal = elegir(ciudadDeDireccion(ficha.direccion), excel.ciudad, usarExcel);
+            String observacionesFinal = elegir(ficha.observaciones, excel.observaciones, usarExcel);
+            return new Persona(ficha.id, ficha.nombre, ficha.apellido1, ficha.apellido2, ficha.dni, direccionConCiudad(ficha.direccion, ciudadFinal), ficha.telefono, ficha.email, ficha.seguridadSocial, ibanFinal, ficha.coche, ficha.fechaNacimiento, ficha.altura, ficha.tallaPantalon, ficha.tallaCamisa, ficha.tallaCamiseta, ficha.tallaCalzado, ficha.idiomas, ficha.experiencia, observacionesFinal);
+        }
+
+        private boolean mismaFicha(Persona a, Persona b) { return a.iban.equals(b.iban) && a.direccion.equals(b.direccion) && a.observaciones.equals(b.observaciones); }
+        private String elegir(String ficha, String excel, boolean usarExcel) { if (vacio(excel)) return ficha; return vacio(ficha) || usarExcel ? excel : ficha; }
+        private boolean distinto(String ficha, String excel) { return !vacio(ficha) && !vacio(excel) && !normalizar(ficha).equals(normalizar(excel)); }
+        private boolean vacio(String texto) { return texto == null || texto.trim().isEmpty(); }
+        private String normalizar(String texto) { return (texto == null ? "" : texto).trim().toUpperCase().replaceAll("\\s+", " "); }
+        private String ciudadDeDireccion(String direccion) { String[] p = direccion == null ? new String[0] : direccion.split("\\|", -1); return p.length == 8 ? p[5] : ""; }
+        private String direccionInicial(String ciudadImportada) { return "Calle|||||" + ciudadImportada.trim() + "||"; }
+        private String direccionConCiudad(String direccion, String ciudadImportada) {
+            String[] p = direccion == null ? new String[0] : direccion.split("\\|", -1);
+            if (p.length != 8) p = new String[] { "Calle", "", "", "", "", "", "", "" };
+            p[5] = ciudadImportada == null ? "" : ciudadImportada.trim(); return String.join("|", p);
+        }
+
         private void exportar(String formato) {
             Map<String, JCheckBox> campos = new LinkedHashMap<>();
-            campos.put("Nombre", new JCheckBox("Nombre", true));
-            campos.put("Primer apellido", new JCheckBox("Primer apellido", true));
-            campos.put("Segundo apellido", new JCheckBox("Segundo apellido", true));
+            campos.put("Nombre completo", new JCheckBox("Nombre completo", true));
             campos.put("Dirección", new JCheckBox("Dirección", false));
             campos.put("Teléfono", new JCheckBox("Teléfono", true));
             campos.put("E-mail", new JCheckBox("E-mail", true));
@@ -446,6 +519,7 @@ public class PonPox {
             campos.put("Tallas", new JCheckBox("Tallas", true));
             campos.put("Idiomas certificados", new JCheckBox("Idiomas certificados", true));
             campos.put("Experiencia", new JCheckBox("Experiencia", true));
+            campos.put("Observaciones", new JCheckBox("Observaciones", true));
             campos.put("N.º Seguridad Social", new JCheckBox("N.º Seguridad Social", false));
             campos.put("Cuenta bancaria / IBAN", new JCheckBox("Cuenta bancaria / IBAN", false));
             JPanel seleccion = new JPanel(new GridLayout(0, 2, 12, 8));
@@ -539,12 +613,13 @@ public class PonPox {
         private String nombreCompleto(Persona persona) { return (persona.nombre + " " + persona.apellido1 + " " + persona.apellido2).trim(); }
 
         private String valor(Persona p, String campo) {
-            if (campo.equals("Nombre")) return p.nombre; if (campo.equals("Primer apellido")) return p.apellido1; if (campo.equals("Segundo apellido")) return p.apellido2;
+            if (campo.equals("Nombre completo")) return nombreCompleto(p);
             if (campo.equals("Dirección")) return direccionParaInforme(p.direccion); if (campo.equals("Teléfono")) return p.telefono; if (campo.equals("E-mail")) return p.email;
             if (campo.equals("DNI / NIE")) return p.dni; if (campo.equals("Coche propio")) return p.coche;
             if (campo.equals("Fecha de nacimiento")) return p.fechaNacimiento; if (campo.equals("Altura")) return p.altura;
             if (campo.equals("Tallas")) return "Pantalón/falda: " + p.tallaPantalon + " · Camisa: " + p.tallaCamisa + " · Camiseta: " + p.tallaCamiseta + " · Calzado: " + p.tallaCalzado;
             if (campo.equals("Idiomas certificados")) return p.idiomas; if (campo.equals("Experiencia")) return p.experiencia;
+            if (campo.equals("Observaciones")) return p.observaciones;
             if (campo.equals("N.º Seguridad Social")) return p.seguridadSocial; return p.iban;
         }
 
@@ -558,10 +633,101 @@ public class PonPox {
         }
     }
 
+    private static class RegistroExcel {
+        final String nombreCompleto, iban, ciudad, observaciones;
+        RegistroExcel(String nombreCompleto, String iban, String ciudad, String observaciones) {
+            this.nombreCompleto = limpiar(nombreCompleto); this.iban = limpiar(iban); this.ciudad = limpiar(ciudad); this.observaciones = limpiar(observaciones);
+        }
+        private static String limpiar(String texto) { return texto == null ? "" : texto.trim(); }
+    }
+
+    /** Lee el formato XLSX de la hoja de personal sin depender de programas externos. */
+    private static class LectorExcelPonPox {
+        static List<RegistroExcel> leer(File archivo) throws Exception {
+            try (ZipFile zip = new ZipFile(archivo)) {
+                List<String> compartidas = leerCompartidas(zip);
+                String hoja = localizarHoja(zip, " AZAF+IBAN@6 NOV");
+                if (hoja == null) hoja = localizarHoja(zip, "AZAF+IBAN@6 NOV");
+                if (hoja == null) throw new IOException("No existe la hoja 'AZAF+IBAN@6 NOV'.");
+                Element raiz = leerXml(zip, hoja).getDocumentElement();
+                NodeList filas = raiz.getElementsByTagNameNS("*", "row");
+                Map<String, RegistroExcel> unicos = new LinkedHashMap<>();
+                for (int i = 0; i < filas.getLength(); i++) {
+                    Element fila = (Element) filas.item(i); Map<Integer, String> celdas = new LinkedHashMap<>();
+                    NodeList celdasXml = fila.getElementsByTagNameNS("*", "c");
+                    for (int j = 0; j < celdasXml.getLength(); j++) {
+                        Element celda = (Element) celdasXml.item(j); celdas.put(columnaDe(celda.getAttribute("r")), leerCelda(celda, compartidas));
+                    }
+                    String nombre = celdas.get(2); // Columna B: AZAFATA-O
+                    if (nombre == null || nombre.trim().isEmpty() || nombre.trim().equalsIgnoreCase("AZAFATA-O")) continue;
+                    RegistroExcel registro = new RegistroExcel(nombre, celdas.get(3), celdas.get(4), celdas.get(5));
+                    unicos.put(normalizarClave(registro.nombreCompleto), registro);
+                }
+                return new ArrayList<>(unicos.values());
+            }
+        }
+
+        private static List<String> leerCompartidas(ZipFile zip) throws Exception {
+            ZipEntry entrada = zip.getEntry("xl/sharedStrings.xml"); if (entrada == null) return Collections.emptyList();
+            NodeList cadenas = leerXml(zip, "xl/sharedStrings.xml").getDocumentElement().getElementsByTagNameNS("*", "si");
+            List<String> resultado = new ArrayList<>();
+            for (int i = 0; i < cadenas.getLength(); i++) resultado.add(cadenas.item(i).getTextContent());
+            return resultado;
+        }
+
+        private static String localizarHoja(ZipFile zip, String nombreBuscado) throws Exception {
+            org.w3c.dom.Document libro = leerXml(zip, "xl/workbook.xml");
+            String id = null; NodeList hojas = libro.getDocumentElement().getElementsByTagNameNS("*", "sheet");
+            for (int i = 0; i < hojas.getLength(); i++) {
+                Element hoja = (Element) hojas.item(i);
+                if (nombreBuscado.equals(hoja.getAttribute("name"))) { id = atributoId(hoja); break; }
+            }
+            if (id == null) return null;
+            org.w3c.dom.Document relaciones = leerXml(zip, "xl/_rels/workbook.xml.rels");
+            NodeList lista = relaciones.getDocumentElement().getElementsByTagNameNS("*", "Relationship");
+            for (int i = 0; i < lista.getLength(); i++) {
+                Element relacion = (Element) lista.item(i);
+                if (id.equals(relacion.getAttribute("Id"))) return "xl/" + relacion.getAttribute("Target");
+            }
+            return null;
+        }
+
+        private static String atributoId(Element elemento) {
+            for (int i = 0; i < elemento.getAttributes().getLength(); i++) {
+                Node atributo = elemento.getAttributes().item(i);
+                if ("id".equals(atributo.getLocalName()) || atributo.getNodeName().endsWith(":id")) return atributo.getNodeValue();
+            }
+            return "";
+        }
+
+        private static org.w3c.dom.Document leerXml(ZipFile zip, String ruta) throws Exception {
+            ZipEntry entrada = zip.getEntry(ruta); if (entrada == null) throw new IOException("Falta " + ruta + " en el libro Excel.");
+            DocumentBuilderFactory fabrica = DocumentBuilderFactory.newInstance(); fabrica.setNamespaceAware(true);
+            try { fabrica.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true); } catch (Exception ignored) { }
+            try (InputStream entradaXml = zip.getInputStream(entrada)) { return fabrica.newDocumentBuilder().parse(entradaXml); }
+        }
+
+        private static String leerCelda(Element celda, List<String> compartidas) {
+            String tipo = celda.getAttribute("t"); String valor = textoHijo(celda, "v");
+            if ("s".equals(tipo)) try { return compartidas.get(Integer.parseInt(valor)); } catch (Exception ignored) { return ""; }
+            if ("inlineStr".equals(tipo)) return textoHijo(celda, "t");
+            return valor;
+        }
+
+        private static String textoHijo(Element elemento, String nombre) {
+            NodeList nodos = elemento.getElementsByTagNameNS("*", nombre); return nodos.getLength() == 0 ? "" : nodos.item(0).getTextContent();
+        }
+
+        private static int columnaDe(String referencia) {
+            int valor = 0; for (int i = 0; i < referencia.length() && Character.isLetter(referencia.charAt(i)); i++) valor = valor * 26 + Character.toUpperCase(referencia.charAt(i)) - 'A' + 1; return valor;
+        }
+        private static String normalizarClave(String texto) { return texto.trim().toUpperCase().replaceAll("\\s+", " "); }
+    }
+
     private static class Persona {
-        final int id; final String nombre, apellido1, apellido2, dni, direccion, telefono, email, seguridadSocial, iban, coche, fechaNacimiento, altura, tallaPantalon, tallaCamisa, tallaCamiseta, tallaCalzado, idiomas, experiencia;
-        Persona(int id, String nombre, String apellido1, String apellido2, String dni, String direccion, String telefono, String email, String seguridadSocial, String iban, String coche, String fechaNacimiento, String altura, String tallaPantalon, String tallaCamisa, String tallaCamiseta, String tallaCalzado, String idiomas, String experiencia) {
-            this.id = id; this.nombre = nombre; this.apellido1 = apellido1; this.apellido2 = apellido2; this.dni = dni; this.direccion = direccion; this.telefono = telefono; this.email = email; this.seguridadSocial = seguridadSocial; this.iban = iban; this.coche = coche; this.fechaNacimiento = fechaNacimiento; this.altura = altura; this.tallaPantalon = tallaPantalon; this.tallaCamisa = tallaCamisa; this.tallaCamiseta = tallaCamiseta; this.tallaCalzado = tallaCalzado; this.idiomas = idiomas; this.experiencia = experiencia;
+        final int id; final String nombre, apellido1, apellido2, dni, direccion, telefono, email, seguridadSocial, iban, coche, fechaNacimiento, altura, tallaPantalon, tallaCamisa, tallaCamiseta, tallaCalzado, idiomas, experiencia, observaciones;
+        Persona(int id, String nombre, String apellido1, String apellido2, String dni, String direccion, String telefono, String email, String seguridadSocial, String iban, String coche, String fechaNacimiento, String altura, String tallaPantalon, String tallaCamisa, String tallaCamiseta, String tallaCalzado, String idiomas, String experiencia, String observaciones) {
+            this.id = id; this.nombre = nombre; this.apellido1 = apellido1; this.apellido2 = apellido2; this.dni = dni; this.direccion = direccion; this.telefono = telefono; this.email = email; this.seguridadSocial = seguridadSocial; this.iban = iban; this.coche = coche; this.fechaNacimiento = fechaNacimiento; this.altura = altura; this.tallaPantalon = tallaPantalon; this.tallaCamisa = tallaCamisa; this.tallaCamiseta = tallaCamiseta; this.tallaCalzado = tallaCalzado; this.idiomas = idiomas; this.experiencia = experiencia; this.observaciones = observaciones;
         }
     }
 
@@ -570,7 +736,7 @@ public class PonPox {
         void inicializar() {
             try (Connection c = DriverManager.getConnection(URL); Statement s = c.createStatement()) {
                 s.executeUpdate("CREATE TABLE IF NOT EXISTS personal (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT NOT NULL, apellido1 TEXT NOT NULL, apellido2 TEXT, dni TEXT, direccion TEXT, telefono TEXT, email TEXT, seguridad_social TEXT, iban TEXT, coche TEXT)");
-                agregarColumna(s, "fecha_nacimiento"); agregarColumna(s, "altura"); agregarColumna(s, "talla_pantalon"); agregarColumna(s, "talla_camisa"); agregarColumna(s, "talla_camiseta"); agregarColumna(s, "talla_calzado"); agregarColumna(s, "idiomas"); agregarColumna(s, "experiencia");
+                agregarColumna(s, "fecha_nacimiento"); agregarColumna(s, "altura"); agregarColumna(s, "talla_pantalon"); agregarColumna(s, "talla_camisa"); agregarColumna(s, "talla_camiseta"); agregarColumna(s, "talla_calzado"); agregarColumna(s, "idiomas"); agregarColumna(s, "experiencia"); agregarColumna(s, "observaciones");
                 s.executeUpdate("CREATE TABLE IF NOT EXISTS eventos (id INTEGER PRIMARY KEY AUTOINCREMENT, presupuesto TEXT, evento TEXT, fecha_inicio TEXT, fecha_fin TEXT)");
                 s.executeUpdate("CREATE TABLE IF NOT EXISTS historial_experiencia (id INTEGER PRIMARY KEY AUTOINCREMENT, personal_id INTEGER, evento_id INTEGER, fecha_inicio TEXT, fecha_fin TEXT, evento TEXT, presupuesto TEXT)");
             } catch (SQLException e) { mostrarError(e); }
@@ -591,17 +757,17 @@ public class PonPox {
         }
         int guardar(Persona persona) {
             boolean nueva = persona.id < 0;
-            String sql = nueva ? "INSERT INTO personal (nombre,apellido1,apellido2,dni,direccion,telefono,email,seguridad_social,iban,coche,fecha_nacimiento,altura,talla_pantalon,talla_camisa,talla_camiseta,talla_calzado,idiomas,experiencia) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)" : "UPDATE personal SET nombre=?,apellido1=?,apellido2=?,dni=?,direccion=?,telefono=?,email=?,seguridad_social=?,iban=?,coche=?,fecha_nacimiento=?,altura=?,talla_pantalon=?,talla_camisa=?,talla_camiseta=?,talla_calzado=?,idiomas=?,experiencia=? WHERE id=?";
+            String sql = nueva ? "INSERT INTO personal (nombre,apellido1,apellido2,dni,direccion,telefono,email,seguridad_social,iban,coche,fecha_nacimiento,altura,talla_pantalon,talla_camisa,talla_camiseta,talla_calzado,idiomas,experiencia,observaciones) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)" : "UPDATE personal SET nombre=?,apellido1=?,apellido2=?,dni=?,direccion=?,telefono=?,email=?,seguridad_social=?,iban=?,coche=?,fecha_nacimiento=?,altura=?,talla_pantalon=?,talla_camisa=?,talla_camiseta=?,talla_calzado=?,idiomas=?,experiencia=?,observaciones=? WHERE id=?";
             try (Connection c = DriverManager.getConnection(URL); PreparedStatement p = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-                asignar(p, persona); if (!nueva) p.setInt(19, persona.id); p.executeUpdate();
+                asignar(p, persona); if (!nueva) p.setInt(20, persona.id); p.executeUpdate();
                 if (!nueva) return persona.id; ResultSet claves = p.getGeneratedKeys(); return claves.next() ? claves.getInt(1) : -1;
             } catch (SQLException e) { mostrarError(e); return -1; }
         }
         void eliminar(int id) { try (Connection c = DriverManager.getConnection(URL); PreparedStatement p = c.prepareStatement("DELETE FROM personal WHERE id=?")) { p.setInt(1, id); p.executeUpdate(); } catch (SQLException e) { mostrarError(e); } }
         private void asignar(PreparedStatement p, Persona x) throws SQLException {
-            p.setString(1, x.nombre.trim()); p.setString(2, x.apellido1.trim()); p.setString(3, x.apellido2.trim()); p.setString(4, x.dni.trim()); p.setString(5, x.direccion.trim()); p.setString(6, x.telefono.trim()); p.setString(7, x.email.trim()); p.setString(8, x.seguridadSocial.trim()); p.setString(9, x.iban.trim()); p.setString(10, x.coche); p.setString(11, x.fechaNacimiento.trim()); p.setString(12, x.altura.trim()); p.setString(13, x.tallaPantalon.trim()); p.setString(14, x.tallaCamisa.trim()); p.setString(15, x.tallaCamiseta.trim()); p.setString(16, x.tallaCalzado.trim()); p.setString(17, x.idiomas.trim()); p.setString(18, x.experiencia.trim());
+            p.setString(1, x.nombre.trim()); p.setString(2, x.apellido1.trim()); p.setString(3, x.apellido2.trim()); p.setString(4, x.dni.trim()); p.setString(5, x.direccion.trim()); p.setString(6, x.telefono.trim()); p.setString(7, x.email.trim()); p.setString(8, x.seguridadSocial.trim()); p.setString(9, x.iban.trim()); p.setString(10, x.coche); p.setString(11, x.fechaNacimiento.trim()); p.setString(12, x.altura.trim()); p.setString(13, x.tallaPantalon.trim()); p.setString(14, x.tallaCamisa.trim()); p.setString(15, x.tallaCamiseta.trim()); p.setString(16, x.tallaCalzado.trim()); p.setString(17, x.idiomas.trim()); p.setString(18, x.experiencia.trim()); p.setString(19, x.observaciones.trim());
         }
-        private Persona deResultado(ResultSet r) throws SQLException { return new Persona(r.getInt("id"), r.getString("nombre"), r.getString("apellido1"), r.getString("apellido2"), r.getString("dni"), r.getString("direccion"), r.getString("telefono"), r.getString("email"), r.getString("seguridad_social"), r.getString("iban"), r.getString("coche"), r.getString("fecha_nacimiento"), r.getString("altura"), r.getString("talla_pantalon"), r.getString("talla_camisa"), r.getString("talla_camiseta"), r.getString("talla_calzado"), r.getString("idiomas"), r.getString("experiencia")); }
+        private Persona deResultado(ResultSet r) throws SQLException { return new Persona(r.getInt("id"), r.getString("nombre"), r.getString("apellido1"), r.getString("apellido2"), r.getString("dni"), r.getString("direccion"), r.getString("telefono"), r.getString("email"), r.getString("seguridad_social"), r.getString("iban"), r.getString("coche"), r.getString("fecha_nacimiento"), r.getString("altura"), r.getString("talla_pantalon"), r.getString("talla_camisa"), r.getString("talla_camiseta"), r.getString("talla_calzado"), r.getString("idiomas"), r.getString("experiencia"), r.getString("observaciones")); }
         private void mostrarError(SQLException e) { System.err.println("Error de base de datos: " + e.getMessage()); }
     }
 
@@ -647,7 +813,7 @@ public class PonPox {
         private final JTextField evento = nuevoCampo();
         private final JTextField fechaInicio = nuevoCampo();
         private final JTextField fechaFin = nuevoCampo();
-        private final DefaultTableModel personal = new DefaultTableModel(new String[] { "ID", "Asignar", "Nombre", "Apellidos", "Teléfono", "Experiencia" }, 0) {
+        private final DefaultTableModel personal = new DefaultTableModel(new String[] { "ID", "Asignar", "Nombre completo", "Teléfono", "Experiencia" }, 0) {
             @Override public Class<?> getColumnClass(int col) {
                 if (col == 0) return Integer.class;
                 return col == 1 ? Boolean.class : String.class;
@@ -687,7 +853,7 @@ public class PonPox {
             return contenido;
         }
 
-        private void cargarPersonal() { personal.setRowCount(0); for (Persona p : new RepositorioPersonal().listar("")) personal.addRow(new Object[] { p.id, false, p.nombre, (p.apellido1 + " " + p.apellido2).trim(), p.telefono, p.experiencia }); }
+        private void cargarPersonal() { personal.setRowCount(0); for (Persona p : new RepositorioPersonal().listar("")) personal.addRow(new Object[] { p.id, false, (p.nombre + " " + p.apellido1 + " " + p.apellido2).trim(), p.telefono, p.experiencia }); }
 
         private void guardarProduccion() {
             if (presupuesto.getText().trim().isEmpty() || evento.getText().trim().isEmpty() || fechaInicio.getText().trim().isEmpty()) { JOptionPane.showMessageDialog(presupuesto, "Indica al menos el número de presupuesto, el evento y la fecha de inicio."); return; }
@@ -733,6 +899,12 @@ public class PonPox {
         campo.setFont(new Font("SansSerif", Font.PLAIN, 14));
         campo.setPreferredSize(new Dimension(260, 33));
         return campo;
+    }
+
+    private static JTextArea nuevaArea() {
+        JTextArea area = new JTextArea(3, 20);
+        area.setFont(new Font("SansSerif", Font.PLAIN, 14)); area.setLineWrap(true); area.setWrapStyleWord(true);
+        return area;
     }
 
     private static JButton botonRosa(String texto) {
