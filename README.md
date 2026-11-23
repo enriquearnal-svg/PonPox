@@ -26,15 +26,21 @@ Producción dispone de las pestañas `N.º presupuesto`, `Evento`, `Fechas del s
 Como contiene datos personales sensibles, no se debe compartir el archivo `ponpox.db` ni subirlo a un repositorio público. En una fase posterior añadiremos perfiles de acceso y copias de seguridad.
 # PonPox
 
-## Versión Producción V10
+## Versión Producción V16
 
 La pantalla principal contiene tres áreas: **Trabajadores**, **Clientes** y **Producción**.
 
 - **Clientes** carga automáticamente la base inicial incluida en `Clientes-2026-11-23.csv` cuando aún no exista una base de clientes. Para actualizarla después, abre Clientes y pulsa `Importar clientes CSV`.
 - En **Producción**, guarda primero la cabecera del presupuesto. Después, en `Producción del presupuesto`, elige el presupuesto y pulsa `Cargar / modificar líneas`: podrás revisar, añadir, editar o borrar líneas antes de guardar los cambios. Cada importe se calcula con `cantidad × precio sin IVA − descuento`.
-- El botón `Importar presupuesto PDF` interpreta las fechas de servicio abreviadas —por ejemplo, `(23,24/1)`— como los días 23 y 24 de enero del año del presupuesto. Confirma siempre la fecha antes de guardar.
-- El análisis económico se registra por **trabajador y día**. Tras guardar una jornada, la ficha queda preparada para registrar el siguiente trabajador o el mismo trabajador en otro día.
-- `Previsualizar producción` muestra todas las jornadas guardadas del presupuesto seleccionado, con salario neto, otros gastos sin PSS y los totales del presupuesto. `Cuadro de nóminas` muestra esas mismas jornadas y una única fila TOTAL por presupuesto, exportable a XLS o PDF.
+- El botón `Importar presupuesto PDF` interpreta las fechas de servicio abreviadas —por ejemplo, `(23,24/1)`— como los días 23 y 24 de enero del año del presupuesto, e identifica el cliente que aparece como destinatario. Si no existía, lo incorpora a Clientes. Confirma siempre la fecha antes de guardar.
+- También puedes crear un presupuesto desde cero con `Nuevo presupuesto` y exportarlo con `Exportar presupuesto PDF`, con cabecera de PonPox, destinatario, datos del servicio, líneas e importes.
+- El análisis económico se registra por **trabajador y día**. Las jornadas guardadas se muestran bajo la ficha del presupuesto y se pueden pulsar para corregirlas sin perder el resto de líneas.
+- `Previsualizar producción` muestra todas las jornadas guardadas del presupuesto seleccionado, con salario neto, otros gastos sin PSS y los totales del presupuesto. `Comprobar con presupuesto` compara la base producida —con márgenes— con las líneas presupuestadas y señala posibles causas de diferencia.
+- En `Informes` se genera un cuadro de nóminas nuevo en cada consulta. Puedes filtrar por intervalo de fechas, número de presupuesto y uno o varios clientes (separados por comas), y después exportar exclusivamente ese resultado a XLS o PDF.
+- La pestaña `Informes` es ahora un generador personalizable: en `Filtros` puedes delimitar cliente(s), presupuesto, mes y rango de días; en `Campos a incluir` marcas las columnas que quieres obtener. Incluye los datos de jornada, trabajador, márgenes, costes, PSS y base imponible.
+- En `Producción del presupuesto` hay búsqueda por cliente y por número de presupuesto para trabajar cómodamente con una base extensa.
+- La edición de líneas muestra siempre el **total del presupuesto sin IVA**. La previsualización y la comprobación comparan expresamente ese total con la base producida.
+- En análisis económico, `Costes cotizables = salario neto × (1 + margen bruto laboral)`. El campo `Total costes` es `costes cotizables + total de otros costes`.
 
 La base de datos ya no depende de la carpeta del proyecto. En Mac se guarda de forma permanente en `~/Library/Application Support/PonPox/ponpox.db`; la primera vez que abras esta versión copia allí la antigua base que tuvieras en la carpeta del proyecto. Cada guardado o importación crea una copia fechada en `~/Library/Application Support/PonPox/copias de seguridad`. Las actualizaciones de PonPox no reemplazan esa base.
 
