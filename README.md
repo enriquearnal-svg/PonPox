@@ -26,6 +26,10 @@ Producción dispone de las pestañas `N.º presupuesto`, `Evento`, `Fechas del s
 Como contiene datos personales sensibles, no se debe compartir el archivo `ponpox.db` ni subirlo a un repositorio público. En una fase posterior añadiremos perfiles de acceso y copias de seguridad.
 # PonPox
 
+## Versión Producción V17
+
+Esta actualización limpia los avisos de mantenimiento detectados por VS Code: se han retirado importaciones y código obsoleto, y el listado de Clientes muestra ahora dirección, país, tipo, referencia y moneda. No cambia la estructura ni el contenido de la base de datos.
+
 ## Versión Producción V16
 
 La pantalla principal contiene tres áreas: **Trabajadores**, **Clientes** y **Producción**.
