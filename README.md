@@ -1,5 +1,17 @@
 # PonPox
 
+## Versión Producción V24
+
+La pestaña **Informes** se ha reconstruido. Ahora presenta tres accesos claros:
+
+- **Informe por presupuesto**
+- **Informe por trabajador**
+- **Informe por cliente**
+
+Cada acceso abre su propio configurador. Permite seleccionar un presupuesto, trabajador o cliente concreto —o `Todos`—, elegir uno o varios meses del año, asignar un nombre al informe, elegir la ordenación y marcar libremente cualquiera de los campos disponibles. Entre ellos están evento, venue, vestuario, fechas y horario, trabajador, IBAN, salario neto, costes, márgenes y base imponible. El resultado se previsualiza en pantalla antes de exportarlo a Excel o PDF.
+
+Se ha eliminado el error de exportación que utilizaba la descripción interna de un campo de pantalla como si fuera el nombre de archivo. A partir de esta versión el archivo se crea usando exclusivamente el título escrito para el informe.
+
 Octava versión del interfaz de gestión de recursos humanos y producción para personal de eventos, congresos y acciones de imagen de marca.
 
 ## Ejecutar en VSCode
@@ -25,6 +37,40 @@ Producción dispone de las pestañas `N.º presupuesto`, `Evento`, `Fechas del s
 
 Como contiene datos personales sensibles, no se debe compartir el archivo `ponpox.db` ni subirlo a un repositorio público. En una fase posterior añadiremos perfiles de acceso y copias de seguridad.
 # PonPox
+
+## Versión Producción V23
+
+Al guardar una ficha de presupuesto, la lista de clientes ya no sustituye la selección actual por el primer cliente disponible. Esto evita que un segundo guardado automático al cerrar cambie el cliente de la referencia abierta.
+
+Al generar un informe de un **número de presupuesto concreto**, ese número tiene prioridad sobre el filtro de clientes: se recuperan sus jornadas ya registradas aunque el cliente hubiera quedado seleccionado de forma incorrecta en una sesión anterior. Los clientes que aparezcan por primera vez al actualizar filtros se seleccionan por defecto, evitando que el informe quede sin resultados por una selección vacía.
+
+## Versión Producción V22
+
+Corrige la apertura de presupuestos desde **Producción presupuestaria**: al seleccionar una fila, PonPox carga la cabecera completa de esa misma referencia —incluido su cliente— y sus líneas, sin arrastrar el cliente de otro presupuesto.
+
+Los informes ya no requieren que exista una jornada de análisis económico para mostrar un presupuesto. Un presupuesto importado y guardado aparece en el informe del año y mes de su servicio; sus columnas de trabajador, IBAN, salario o costes permanecen vacías hasta que se registren jornadas. Cuando sí existen jornadas, se generan sus filas por trabajador y día.
+
+## Versión Producción V21
+
+La ventana principal de Producción queda reducida a dos pestañas: **Producción presupuestaria** e **Informes**. La primera presenta una tabla persistente de presupuestos ordenados por número, con sus datos principales y total sin IVA. Selecciona una línea para abrirla y modificarla o para acceder a su **Análisis económico**.
+
+La importación ya guarda inmediatamente el presupuesto y sus líneas; asimismo, al cerrar el editor de un presupuesto con número y evento, PonPox guarda sus cambios de manera automática. Por ello, al volver a abrir Producción, la tabla muestra lo ya guardado.
+
+## Versión Producción V20
+
+El botón **Generar informe** se muestra ahora directamente al final de los filtros, antes de las opciones de exportación. El orden de uso es: definir filtros, marcar columnas, generar y comprobar las filas en pantalla y, por último, exportar a XLS o PDF.
+
+## Versión Producción V19
+
+La pestaña **Informes** incorpora filtros encadenados para trabajar con muchos registros: selecciona un año y uno o varios meses; entonces Clientes muestra únicamente quienes tienen producción registrada en ese período y Presupuesto únicamente las referencias de esos clientes. Ambos conservan la opción **Todos** y permiten excluir clientes concretos antes de generar el informe. También puede ordenarse por presupuesto, cliente o trabajador.
+
+Los campos seleccionables cubren la información disponible de presupuesto, cliente, evento, venue, vestuario, trabajador y análisis económico. Así se puede generar, por ejemplo, un informe de un trabajador con solo `Evento`, `Venue`, `Día trabajado`, `Hora desde`, `Hora hasta` y `Vestuario`.
+
+Al importar un presupuesto PDF, su cabecera y sus líneas se guardan de inmediato. En Análisis económico se puede eliminar la jornada seleccionada con confirmación; la producción y el historial de experiencia se actualizan en consecuencia.
+
+## Versión Producción V18
+
+El generador de informes corrige la consulta de jornadas y permite asignar a cada informe un título propio. El título se aplica al PDF y al nombre sugerido para el archivo exportado; las columnas continúan siendo totalmente seleccionables y las filas se ordenan por presupuesto, día y trabajador.
 
 ## Versión Producción V17
 
