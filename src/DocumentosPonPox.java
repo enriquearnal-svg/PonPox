@@ -9,8 +9,11 @@ import com.itextpdf.text.pdf.*;
 final class DocumentosPonPox {
     private DocumentosPonPox() {}
     static File destino(java.awt.Component padre,String nombre) {
+        return destino(padre,nombre,Carpetas.carpeta(Carpetas.P));
+    }
+    static File destino(java.awt.Component padre,String nombre,File directorio) {
         JFileChooser s=new JFileChooser();
-        s.setSelectedFile(new File(nombre.replaceAll("[^\\p{L}\\p{N} ._-]","_")+".pdf"));
+        s.setSelectedFile(new File(directorio,nombre.replaceAll("[^\\p{L}\\p{N} ._-]","_")+".pdf"));
         if(s.showSaveDialog(padre)!=JFileChooser.APPROVE_OPTION)return null;
         File f=s.getSelectedFile();
         if(!f.getName().toLowerCase(java.util.Locale.ROOT).endsWith(".pdf"))f=new File(f+".pdf");
@@ -42,8 +45,8 @@ final class DocumentosPonPox {
         }finally{r.close();}});
     }
     static class Perfil {
-        final String nombre,foto,datos;
-        Perfil(String n,String f,String d){nombre=n;foto=f;datos=d;}
+        final String nombre,datos;final List<String> fotos;
+        Perfil(String n,List<String> f,String d){nombre=n;fotos=List.copyOf(f);datos=d;if(fotos.size()!=3)throw new IllegalArgumentException("Se requieren tres fotografías.");}
     }
     private static void caja(PdfContentByte cb,String texto,int x,int y,int w,int h,int tam)throws Exception{
         for(int t=tam;t>=8;t--){
@@ -62,7 +65,10 @@ final class DocumentosPonPox {
                 cb.addTemplate(w.getImportedPage(r,origen),0,0);
                 if(origen==2)caja(cb,cliente+"   ·   "+evento,105,91,566,62,17);
                 if(origen==3){Perfil p=perfiles.get(i-2);caja(cb,p.nombre,35,420,555,75,32);caja(cb,p.datos,35,55,296,345,17);
-                    if(!p.foto.isEmpty()){Image img=Image.getInstance(p.foto);img.scaleToFit(376,362);img.setAbsolutePosition(349+(376-img.getScaledWidth())/2,50+(362-img.getScaledHeight())/2);cb.addImage(img);}
+                    int[][] marcos={{349,50,185,362},{541,234,184,178},{541,50,184,177}};
+                    cb.saveState();
+                    for(int j=0;j<3;j++){int[] m=marcos[j];cb.setColorFill(BaseColor.WHITE);cb.setColorStroke(new BaseColor(215,201,211));cb.rectangle(m[0],m[1],m[2],m[3]);cb.fillStroke();Image img=Image.getInstance(p.fotos.get(j));img.scaleToFit(m[2]-8,m[3]-8);img.setAbsolutePosition(m[0]+(m[2]-img.getScaledWidth())/2,m[1]+(m[3]-img.getScaledHeight())/2);cb.addImage(img);}
+                    cb.restoreState();
                 }
             }d.close();
         }finally{r.close();}});

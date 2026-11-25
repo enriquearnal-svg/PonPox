@@ -1,0 +1,53 @@
+PONPOX V31 — prueba independiente para personal de oficina
+
+EN EL MAC DE ENRIQUE
+1. Descomprime este ZIP en una carpeta privada local. Cierra PonPox en VS Code.
+2. Arrastra PonPox.app a Aplicaciones y desde allí al Dock. Abre la aplicación
+   y confirma un trabajador y un presupuesto recientes. Usa tu base habitual.
+3. Cierra PonPox antes de preparar el envío. En la carpeta descomprimida abre
+   «Preparar envios.command». Conserva la carpeta «Modelos» al lado del comando.
+   Confirma la base seleccionada y los recuentos. Elige una contraseña de 12
+   caracteres o más. Se abrirá una carpeta nueva con DOS ZIP de oficina.
+   Solo estos ZIP, no los de Modelos, contienen la copia cifrada de los datos.
+4. Entrega a cada empleado autorizado únicamente el ZIP correspondiente a su
+   sistema. Utiliza un enlace privado si el correo rechaza el tamaño o el tipo
+   de archivo. Comunica la contraseña por otro canal. No subas los ZIP de
+   envío ni el .ppx a GitHub. Las copias locales, los PDF y las fotos que se
+   extraen NO permanecen cifrados por PonPox. No compartir con azafatas.
+
+EN EL EQUIPO DE OFICINA (JAVA 21 O POSTERIOR)
+Descomprime TODO el ZIP recibido. No lo ejecutes desde dentro de la vista ZIP.
+Mac: mueve «PonPox Oficina.app» a Aplicaciones; ábrela y añádela al Dock.
+Windows: doble clic en «Instalar PonPox.cmd». Instala para tu usuario y crea
+el acceso directo «PonPox Oficina» en el Escritorio. Requiere javaw en PATH.
+Primera apertura: elige Datos-oficina.ppx de la carpeta descomprimida y escribe
+la contraseña. En aperturas posteriores usa directamente los datos locales.
+Si falta Java, instala Temurin 21 JDK para el sistema y la arquitectura del
+equipo: https://adoptium.net/temurin/releases/?version=21 . En Windows selecciona
+la opción de añadir Java al PATH. Los paquetes no incluyen Java ni firma de
+distribución. Si el equipo está gestionado y bloquea la apertura, consulta a TI.
+Los cambios no vuelven a Enrique ni se sincronizan con otros empleados. La
+copia no se reimporta sobre pruebas existentes. No se requiere servidor.
+
+INFORMES
+Principal: PonPox/PonPox/Informes si el proyecto está en la carpeta interior; en caso contrario PonPox/Informes. Oficina: PonPox-Prueba/Informes.
+Al abrir se copian los informes anteriores de la carpeta exterior y de Documentos sin borrar los originales.
+En el Mac de Enrique, coloca Sincronizar_PonPox.command en /Users/enrique/PonPox
+para actualizar las tres nubes. No requiere cambiar la base de datos.
+ Trabajadores / María G / Fotos, Informes y Reportes. Confirma el nombre y
+ inicial la primera vez. La ficha permite abrir la carpeta. Homónimos se
+ separan en Coincidencias. Los informes de grupo no se copian a cada persona.
+ Clientes / NOETIUM / Setcards y Presupuestos importados. Las versiones de
+ presupuesto tienen un identificador para que no se sobrescriban.
+ Producción / informes y reportes emitidos. Los reportes con trabajador
+ asignado se archivan también en su carpeta individual. La copia que se
+ archiva es la emitida, no una futura copia cumplimentada por el trabajador.
+No se trasladan exportaciones antiguas de carpetas particulares. Los PDF
+originales archivados en la base se recuperan en Clientes al iniciar.
+
+PARA SEGUIR EDITANDO EN VSCODE
+Solo para Enrique: copia los cuatro archivos de Actualizacion-VSCode/src en la
+carpeta src del proyecto V29 en feature1. Conserva tus plantillas y ponpox.db.
+La app empaquetada ejecuta V31, no recompila cambios posteriores de VS Code.
+Incluye las plantillas estándar: si personalizaste las tuyas, cópialas antes
+del envío a la carpeta plantillas de la distribución correspondiente.
