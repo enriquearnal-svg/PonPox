@@ -1,0 +1,31 @@
+PonPox V27 · Plantillas y fotografías
+
+INSTALACIÓN EN VSCODE
+Cierra PonPox. En la rama feature1 abre /Users/enrique/PonPox/PonPox/.
+Copia los dos archivos .java dentro de src/ (reemplaza solo PonPox.java).
+Copia plantillas/ al mismo nivel que src/ y lib/. Ejecuta PonPox desde VS Code.
+No reemplaces el proyecto completo. El ZIP no contiene bases de datos ni fotos de trabajadores.
+
+TRABAJADORES
+En Ficha / alta hay diez marcos. Guarda una ficha nueva antes de importar sus fotografías.
+Utiliza JPG o PNG para asegurar compatibilidad con el visor y la exportación PDF.
+Setcards PDF, en el listado de Trabajadores: selecciona una o varias personas
+(Cmd+clic para varias en Mac), indica cliente y evento y elige la foto y el texto
+que enviarás al cliente. Los cambios de presentación no modifican las fichas.
+
+PRODUCCIÓN
+Selecciona un presupuesto en Producción presupuestaria y pulsa Reporte de actividad.
+Escoge una jornada registrada o un parte sin jornada. Guarda el PDF con otro nombre.
+El trabajador puede escribir, guardar una copia, imprimir y firmar con el cliente.
+Los horarios y gastos reales no se presuponen; los totales se cumplimentan manualmente.
+Rellenar el PDF no modifica las jornadas ni los importes en la aplicación.
+
+PERSONALIZAR LOS MODELOS PARA FUTURAS EMISIONES
+Setcards.pptx: modifica en PowerPoint las cuatro páginas maestras. Exporta las cuatro
+en el mismo orden a plantillas/Setcards.pdf. Conserva el tamaño de página, el hueco
+bajo el banner y las zonas de la diapositiva 3 (nombre arriba, texto a la izquierda,
+foto a la derecha). La aplicación repetirá esa diapositiva una vez por persona.
+Reporte.pdf: puedes editar el diseño del PDF maestro con un editor de formularios
+PDF. Mantén los nombres internos de los campos para que se rellenen desde PonPox.
+También puedes añadir campos para que el trabajador los rellene manualmente.
+Conserva una copia de las plantillas antes de modificarlas.
