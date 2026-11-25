@@ -1,4 +1,3 @@
-import java.awt.Desktop;
 import java.awt.Taskbar;
 import javax.imageio.ImageIO;
 import javax.swing.*;
