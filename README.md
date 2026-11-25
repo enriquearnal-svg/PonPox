@@ -1,5 +1,12 @@
 # PonPox
 
+## Versión Producción V25
+
+- Cada ficha de **Trabajador** incorpora tres marcos para fotografías. Guarda primero la ficha y después usa `Importar foto 1`, `2` o `3`; las imágenes quedan vinculadas de forma permanente a la persona.
+- En **Clientes**, un clic sobre una línea abre su ficha editable. Desde ella se pueden modificar sus campos y abrir el listado de presupuestos importados o creados para ese cliente.
+- La importación de presupuestos reconoce tanto el campo **Evento** como **Servicio**. En la ficha se muestra como `Evento / servicio`, bajo el número de presupuesto.
+- Si se importa de nuevo un presupuesto ya existente, PonPox pide confirmación antes de actualizar cabecera y líneas. Las jornadas de análisis económico y el historial de trabajadores ya producidos se conservan.
+
 ## Versión Producción V24
 
 La pestaña **Informes** se ha reconstruido. Ahora presenta tres accesos claros:
