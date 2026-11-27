@@ -1,0 +1,64 @@
+# Datos de trabajo y copias locales
+[Ii]nformes/
+[Ff]otos/
+[Ff]otos trabajadores/
+[Dd]atos/
+[Dd]atos-[Pp]rivados/
+[Rr]espaldo*/
+[Cc]opias de seguridad/
+[Bb]ackup*/
+Envios-PonPox-*/
+PonPox-Entrega-Windows-*/
+.ponpox*/
+*.[Dd][Bb]
+*.[Dd][Bb]-*
+*.[Ss][Qq][Ll][Ii][Tt][Ee]*
+*.[Ss][Qq][Ll]
+*.[Cc][Ss][Vv]
+*.[Tt][Ss][Vv]
+*.[Pp][Pp][Xx]
+*.bak
+
+# Documentos y fotos. Excepciones exactas para recursos de la aplicación.
+*.[Pp][Dd][Ff]
+*.doc*
+*.xls*
+*.ppt*
+*.odt
+*.ods
+*.rtf
+*.[Jj][Pp][Gg]
+*.[Jj][Pp][Ee][Gg]
+*.[Pp][Nn][Gg]
+*.gif
+*.bmp
+*.webp
+*.heic
+*.tif*
+!/Logotipo PonPox.png
+!/plantillas/Reporte.pdf
+!/plantillas/Setcards.pdf
+!/plantillas/Setcards.pptx
+
+# Distribuciones, compilación y archivos del sistema
+/bin/
+/build/
+/dist/
+/out/
+*.class
+*.exe
+*.msi
+*.zip
+*.7z
+*.tar
+*.gz
+*.dmg
+*.app/
+.DS_Store
+__pycache__/
+.env
+.env.*
+*.pem
+*.key
+*.pfx
+*.p12

@@ -1,0 +1,14 @@
+# PonPox para Windows
+## 1. Instalar y abrir
+Abre PonPox_Setup.exe desde el enlace privado que te ha facilitado tu organización. Pulsa Instalar y después Finalizar. Deja marcada la opción Abrir PonPox si quieres empezar enseguida. Java viene incluido.
+En adelante, usa el icono PonPox del escritorio o busca PonPox en el menú Inicio. En ese mismo menú tienes este manual.
+## 2. Primeros pasos
+Trabajadores permite buscar fichas, consultar fotos y ver el historial. Clientes permite consultar sus datos y presupuestos. Producción permite abrir un presupuesto, registrar jornadas y generar informes.
+En PonPox, elige Documentos > Abrir carpeta de informes. También puedes abrir el Explorador de archivos, escribir %USERPROFILE%\PonPox\Informes en la barra superior y pulsar Intro. Encontrarás las carpetas Trabajadores, Clientes y Producción. Puedes elegir otra ubicación al exportar un documento.
+## 3. Copia de seguridad
+Cierra PonPox. En el Explorador, escribe %USERPROFILE% y copia las carpetas .ponpox y PonPox a una ubicación privada. Pon la fecha a la copia. .ponpox contiene la base, las fotos vinculadas y las copias internas. PonPox contiene los informes.
+Para restaurar, cierra PonPox y conserva aparte una copia de las carpetas actuales. Recupera las dos carpetas de la misma fecha en su ubicación original. Si has cambiado de cuenta o de ordenador, comprueba que las fotos se abren.
+## 4. Actualizar
+Cierra PonPox y haz una copia de seguridad. Ejecuta el nuevo instalador desde la misma cuenta de Windows. La actualización instala una nueva versión del programa y utiliza tu base y tus informes existentes. Comprueba al abrir que ves tus cambios recientes.
+## Uso interno
+El instalador inicial y las copias contienen datos de trabajo. Guárdalos en una ubicación privada y compártelos solo con personal autorizado. Los cambios de cada equipo se guardan localmente.

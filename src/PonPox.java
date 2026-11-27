@@ -66,6 +66,21 @@ public class PonPox {
             setSize(1100, 700);
             setLocationRelativeTo(null);
             setContentPane(crearContenido());
+            if (Boolean.getBoolean("ponpox.instalador.windows")) {
+                JMenuBar barra = new JMenuBar();
+                JMenu documentos = new JMenu("Documentos");
+                JMenuItem informes = new JMenuItem("Abrir carpeta de informes");
+                informes.addActionListener(e -> {
+                    try {
+                        Desktop.getDesktop().open(Carpetas.carpeta(Carpetas.P).getParentFile());
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(this, "No se pudo abrir la carpeta de informes: " + ex.getMessage());
+                    }
+                });
+                documentos.add(informes);
+                barra.add(documentos);
+                setJMenuBar(barra);
+            }
         }
 
         private JPanel crearContenido() {
@@ -860,7 +875,7 @@ public class PonPox {
             } catch (SQLException e) { mostrarError(e); return -1; }
         }
         void eliminar(int id) { try (Connection c = DriverManager.getConnection(URL); PreparedStatement p = c.prepareStatement("DELETE FROM personal WHERE id=?")) { p.setInt(1, id); p.executeUpdate(); } catch (SQLException e) { mostrarError(e); } }
-        String fotoDe(int personaId,int posicion){try(Connection c=DriverManager.getConnection(URL);PreparedStatement p=c.prepareStatement("SELECT ruta FROM personal_fotos WHERE personal_id=? AND posicion=?")){p.setInt(1,personaId);p.setInt(2,posicion);ResultSet r=p.executeQuery();return r.next()?r.getString(1):"";}catch(SQLException e){return "";}}
+        String fotoDe(int personaId,int posicion){try(Connection c=DriverManager.getConnection(URL);PreparedStatement p=c.prepareStatement("SELECT ruta FROM personal_fotos WHERE personal_id=? AND posicion=?")){p.setInt(1,personaId);p.setInt(2,posicion);ResultSet r=p.executeQuery();String ruta=r.next()?r.getString(1):"";return ruta==null||ruta.isBlank()?"":Oficina.rutaFoto(ruta).toString();}catch(SQLException e){return "";}}
         String guardarFoto(int personaId,int posicion,File origen)throws Exception{String extension="jpg";String n=origen.getName();int punto=n.lastIndexOf('.');if(punto>=0)extension=n.substring(punto+1).toLowerCase(Locale.ROOT);File carpeta=new File(BasePonPox.archivo.getParentFile(),"fotos trabajadores");carpeta.mkdirs();File destino=new File(carpeta,"trabajador_"+personaId+"_foto_"+(posicion+1)+"."+extension);Files.copy(origen.toPath(),destino.toPath(),StandardCopyOption.REPLACE_EXISTING);try(Connection c=DriverManager.getConnection(URL);PreparedStatement p=c.prepareStatement("INSERT INTO personal_fotos(personal_id,posicion,ruta) VALUES(?,?,?) ON CONFLICT(personal_id,posicion) DO UPDATE SET ruta=excluded.ruta")){p.setInt(1,personaId);p.setInt(2,posicion);p.setString(3,destino.getAbsolutePath());p.executeUpdate();}return destino.getAbsolutePath();}
         private void asignar(PreparedStatement p, Persona x) throws SQLException {
             p.setString(1, x.nombre.trim()); p.setString(2, x.apellido1.trim()); p.setString(3, x.apellido2.trim()); p.setString(4, x.dni.trim()); p.setString(5, x.direccion.trim()); p.setString(6, x.telefono.trim()); p.setString(7, x.email.trim()); p.setString(8, x.seguridadSocial.trim()); p.setString(9, x.iban.trim()); p.setString(10, x.coche); p.setString(11, x.fechaNacimiento.trim()); p.setString(12, x.altura.trim()); p.setString(13, x.tallaPantalon.trim()); p.setString(14, x.tallaCamisa.trim()); p.setString(15, x.tallaCamiseta.trim()); p.setString(16, x.tallaCalzado.trim()); p.setString(17, x.idiomas.trim()); p.setString(18, x.experiencia.trim()); p.setString(19, x.observaciones.trim());

@@ -69,7 +69,7 @@ final class Carpetas{
       Files.createDirectories(dir);if(!Files.exists(marca))Files.writeString(marca,""+id,StandardOpenOption.CREATE_NEW);
       for(String sub:new String[]{"Fotos","Reportes","Informes"})Files.createDirectories(dir.resolve(sub));
       try(var q=c.prepareStatement("select posicion,ruta from personal_fotos where personal_id=?")){q.setInt(1,id);try(var r=q.executeQuery()){while(r.next()){
-       String v=r.getString(2);if(v==null||v.isBlank())continue;Path src=Path.of(v);if(!Files.isRegularFile(src))continue;
+       String v=r.getString(2);if(v==null||v.isBlank())continue;Path src=Oficina.rutaFoto(v);if(!Files.isRegularFile(src))continue;
        Path foto=dir.resolve("Fotos").resolve("Foto-"+(r.getInt(1)+1)+"."+Oficina.ext(src));if(!Files.exists(foto)||Files.mismatch(src,foto)!=-1)Files.copy(src,foto,StandardCopyOption.REPLACE_EXISTING);
       }}}
       return dir;

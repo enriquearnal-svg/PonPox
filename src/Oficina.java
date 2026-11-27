@@ -14,6 +14,10 @@ import java.util.zip.*;
 public final class Oficina {
     static final boolean MAC=System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("mac");
     static Path datos(boolean demo){return Path.of(System.getProperty("user.home"),MAC?"Library/Application Support":"",MAC?(demo?"PonPox-Prueba":"PonPox"):(demo?".ponpox-prueba":".ponpox"));}
+    static Path rutaFoto(String ruta){
+        Path archivo=Path.of(ruta);
+        return archivo.isAbsolute()?archivo:datos(Boolean.getBoolean("ponpox.prueba")).resolve(archivo);
+    }
     static Connection db(Path p)throws Exception{return DriverManager.getConnection("jdbc:sqlite:"+p.toAbsolutePath());}
     static void limpiar(Path p)throws IOException{if(!Files.exists(p))return;try(var w=Files.walk(p)){for(Path f:w.sorted(Comparator.reverseOrder()).toArray(Path[]::new))Files.delete(f);}}
     static boolean tabla(Connection c,String t)throws SQLException{try(var s=c.prepareStatement("select 1 from sqlite_master where type='table' and name=?")){s.setString(1,t);return s.executeQuery().next();}}
@@ -33,7 +37,7 @@ public final class Oficina {
             Map<String,Path> fotos=new LinkedHashMap<>();
             try(Connection c=db(snap)){if(tabla(c,"personal_fotos")){
                 try(var s=c.createStatement();var r=s.executeQuery("select personal_id,posicion,ruta from personal_fotos where coalesce(ruta,'')<>''")){
-                    while(r.next()){Path src=Path.of(r.getString(3));if(!Files.isRegularFile(src))throw new IOException("Falta una foto: "+src+". Revisa la ficha antes de compartir.");
+                    while(r.next()){Path src=Path.of(r.getString(3));if(!src.isAbsolute())src=origen.toAbsolutePath().getParent().resolve(src);if(!Files.isRegularFile(src))throw new IOException("Falta una foto: "+src+". Revisa la ficha antes de compartir.");
                         String n="fotos/"+r.getInt(1)+"_"+r.getInt(2)+"."+ext(src);fotos.put(n,src);}
                 }
                 try(var u=c.prepareStatement("update personal_fotos set ruta=? where personal_id=? and posicion=?")){
